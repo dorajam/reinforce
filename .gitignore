@@ -7,7 +7,7 @@
 	*.so
 	
 # Distribution / packaging
-	*pynb_checkpoints
+	*ipynb_checkpoints
 	.Python
 	env/
 	build/
