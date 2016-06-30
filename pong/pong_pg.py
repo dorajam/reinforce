@@ -35,7 +35,7 @@ def feedforward(activation):
     output = sigmoid(final_activation)
     return preactivation, output
 
-def backprop(preactivation, gradient):
+def backprop(inp, preactivation, gradient):
     # skipping the backprop for the sigmoid func!!!! --> fix?!
     # sp = sigmoid_prime(final_output)
     # delta = gradient * sp
@@ -45,7 +45,6 @@ def backprop(preactivation, gradient):
     hidden_gradients[preactivation == 0] = 0
     dw2 = np.dot(inp.T, hidden_gradients)
     return {'W1':dW1, 'W2':dW2}
-
 
 def discount_rewards(r):
   """ take 1D float array of rewards and compute discounted reward """
@@ -83,6 +82,7 @@ episode, correct = 0, 0.0
 model = {}
 model['W1'] = np.random.rand(hidden, num_inputs)
 model['W2'] = np.random.rand(hidden, num_actions)
+grad_buffer = { k : np.zeros(w.shape) for k,w in model.iteritems() }
 
 prev_frame = None
 inputs, preacts, rewards, losses = [],[],[],[]
@@ -128,25 +128,10 @@ while True:
         discounter_r /= np.std(discounter_r)
 
         gradient = discounted_r
-        dw = backprop(gradient)
-        # remember dw
+        updates = backprop(np_inputs, np_preacts, gradient)
+        # [for k in model[k]]
 
-        # udate
 
-            
-    # # BACKPROP
-    # # through sigmoid -> sigmoid(1-sigmoid) of the preactivation!
-    # sp = sigmoid_prime(preactivation)
-    # # gradient = loss(logP, action)
-    # # print gradient
-    # delta = gradient * sp
-
-    # # print delta
-
-    # db = delta
-    # dw = delta * game
-    # # print 'delta', delta, 'sp', sp
-    
     # # GRADIENT ASCENT
     # model['params1']['b1'] += eta * db
     # model['params1']['W1'] += eta * dw
