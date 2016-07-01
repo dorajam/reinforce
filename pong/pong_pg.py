@@ -40,7 +40,10 @@ def backprop(inp, preactivation, gradient):
     # sp = sigmoid_prime(final_output)
     # delta = gradient * sp
     
-    dw1 = np.dot(preactivation.T, gradient)
+    # if episode%batch_size == 0:
+    #     accuracy = round(correct/counter * 100,2)
+    #     print 'Accuracy: {0} / {1}'.format(accuracy, 100)
+
     hidden_gradients = np.dot(model['W2'], gradient)
     hidden_gradients[preactivation == 0] = 0
     dw2 = np.dot(inp.T, hidden_gradients)
@@ -51,9 +54,9 @@ def discount_rewards(r):
   discounted_r = np.zeros(r.shape)
   R = 0
   for e in reversed(xrange(0, r.size)):
-    if r[e] != 0: 0 = R # reset the sum, since this was a game boundary (pong specific!)
-    R = R * gamma + r[t]
-    discounted_r[t] = R
+    if r[e] != 0: R=0 # reset the sum, since this was a game boundary (pong specific!)
+    R = R * gamma + r[e]
+    discounted_r[e] = R
   return discounted_r
 
 def sigmoid(x):
@@ -116,29 +119,26 @@ while True:
         episode += 1
         frame = env.reset()
 
-        np_preacts = vstack(preacts)
-        np_inputs = vstack(inputs)
-        np_rewards= vstack(rewards)
-        np_losses = vstack(losses)
+        np_preacts = np.vstack(preacts)
+        np_inputs = np.vstack(inputs)
+        np_rewards= np.vstack(rewards)
+        np_losses = np.vstack(losses)
         preacts, inputs, rewards, losses = [],[],[],[]
 
         # normalize your rewards! 
         discounted_r = discount_rewards(np_rewards)
-        discounter_r -= np.mean(discounter_r)
-        discounter_r /= np.std(discounter_r)
+        discounted_r -= np.mean(discounted_r)
+        discounted_r /= np.std(discounted_r)
 
         gradient = discounted_r
-        updates = backprop(np_inputs, np_preacts, gradient)
-        # [for k in model[k]]
+        updates = backprop(np_inputs, np_preacts, np_rewards)
+        for k in model: grad_buffer[k] += updates[k] # accumulate grad over batch
 
-
-    # # GRADIENT ASCENT
-    # model['params1']['b1'] += eta * db
-    # model['params1']['W1'] += eta * dw
-
-    # if episode%batch_size == 0:
-    #     accuracy = round(correct/counter * 100,2)
-    #     print 'Accuracy: {0} / {1}'.format(accuracy, 100)
+        if episode % batch_size == 0:
+            for k,v in model.iteritems():
+                grad = grad_buffer[k]
+                model[k] += eta * grad / batch_size
+                grad_buffer = np.zeros(v.shape)
 
 
 
