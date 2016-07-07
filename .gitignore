@@ -1,6 +1,5 @@
-*py*
-
-
+	*ipynb
+	*pyc
 	Ache__/
 	*.py[cod]
 	*$py.class
@@ -9,7 +8,6 @@
 	*.so
 	
 # Distribution / packaging
-	*ipynb*
 	.Python
 	env/
 	build/
@@ -87,4 +85,3 @@
 	
 # Spyder project settings
 	.spyderproject
-	
