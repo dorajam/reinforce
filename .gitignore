@@ -1,3 +1,5 @@
+*py*
+
 
 	Ache__/
 	*.py[cod]
@@ -7,7 +9,7 @@
 	*.so
 	
 # Distribution / packaging
-	*ipynb_checkpoints
+	*ipynb*
 	.Python
 	env/
 	build/
