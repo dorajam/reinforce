@@ -56,7 +56,7 @@ model = {}
 model['W1'] = np.random.rand(num_actions, num_inputs)
 model['b1'] = np.random.rand(num_actions, 1)
 
-# helper funcs
+# helper functions
 def feedforward(data, model = model):
     ''' Function to be learnt -> takes some data point and outputs some class scores'''
     activation = np.dot(model['W1'], data) + model['b1']
@@ -66,7 +66,6 @@ def feedforward(data, model = model):
 def backprop(input_neurons, preactivation, gradient):
     '''Backpropagates the gradient/error through network and calculates some delta to update the parameters by'''
     sp = sigmoid_prime(preactivation)
-    # gradient = loss(logP, action)      # for normal supervised learning
     delta = gradient * sp    # delta is the error
     db = delta
     dw = delta * input_neurons
@@ -80,10 +79,6 @@ def update(dw, db, batch_size):
 def loss(desired, estimated):
     '''Calculates the Mean Squared Error -> See how far off the estimated output is from where we want to be'''
     return 0.5 * np.sum(desired - estimated)**2
-
-def loss_prime(desired, estimated):
-    ''' Calculates derivative of the Mean Squared Error'''
-    return estimated - desired
 
 def sigmoid(x):
     return 1.0/(1.0 + np.exp(-x))
@@ -141,6 +136,7 @@ def gradient_ascent(input_data):
         if episode%batch_size == 0:
             # update parameters by deltas
             update(dw_buffer, db_buffer, batch_size)
+            # empty delta buffers
             db_buffer = np.zeros(model['W1'].shape)
             dw_buffer = np.zeros(model['b1'].shape)
 
@@ -151,16 +147,17 @@ def gradient_ascent(input_data):
             # check MSE of estimated action
             desired = np.zeros(output.shape)
             desired[correct_action] = correct_action
-            cost = loss(desired, output) 
+            cost = loss(desired, output)
 
             print 'Accuracy: {0} / 100 '.format(accuracy) + 'Loss: ' + str(cost)
+
             res = [(round_num(x),y) for x,y in test_data]
             correct_count = sum(int(x==y) for x,y in res)
             test_accuracy = round(float(correct_count)/ test_len * 100, 2)
             print 'Test data accuracy: {0} / 100'.format(test_accuracy)
-            if accuracy > 90 and test_accuracy > 90:
-                return
 
+            if accuracy > 95 and test_accuracy > 95:
+                return
 
 if __name__ == "__main__":
     gradient_ascent(input_data)
