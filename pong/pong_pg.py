@@ -4,7 +4,7 @@
 '''
 Policy gradient for reinforcement learning
 http://karpathy.github.io/2016/05/31/rl/
-Numerical toy example + game of pong
+Game of pong
 '''
 
 import numpy as np
@@ -28,10 +28,10 @@ def preprocess(I):
     return I.astype(np.float).ravel()
 
 def feedforward(activation):
-    activation = activation.ravel()
+    # import ipdb;ipdb.set_trace()
     preactivation = np.dot(model['W1'], activation)
     preactivation[preactivation < 0] = 0    # ReLU nonlinearity
-    final_activation = np.dot(model['W2'].transpose(), preactivation)
+    final_activation = np.dot(model['W2'], preactivation)
     output = sigmoid(final_activation)
     return preactivation, output
 
@@ -39,18 +39,14 @@ def backprop(inp, preactivation, gradient):
     # skipping the backprop for the sigmoid func!!!! --> fix?!
     # sp = sigmoid_prime(final_output)
     # delta = gradient * sp
-    
-    # if episode%batch_size == 0:
-    #     accuracy = round(correct/counter * 100,2)
-    #     print 'Accuracy: {0} / {1}'.format(accuracy, 100)
-
+    dW2 = np.dot(gradient.T, preactivation).ravel()
     hidden_gradients = np.dot(model['W2'], gradient)
     hidden_gradients[preactivation == 0] = 0
-    dw2 = np.dot(inp.T, hidden_gradients)
+    dw1 = np.dot(inp.T, hidden_gradients)
     return {'W1':dW1, 'W2':dW2}
 
 def discount_rewards(r):
-  """ take 1D float array of rewards and compute discounted reward """
+  """ take 1D float array of rewards from the last 21 games and discounts them"""
   discounted_r = np.zeros(r.shape)
   R = 0
   for e in reversed(xrange(0, r.size)):
@@ -78,14 +74,14 @@ def loss(predicted, desired):
 env = gym.make("Pong-v0")
 
 # up or down
-num_actions = 2
+num_actions = 1
 num_inputs = 80*80
 episode, correct = 0, 0.0
 
 model = {}
 model['W1'] = np.random.rand(hidden, num_inputs)
-model['W2'] = np.random.rand(hidden, num_actions)
-grad_buffer = { k : np.zeros(w.shape) for k,w in model.iteritems() }
+model['W2'] = np.random.rand(num_actions, hidden)
+grad_buffer = { k : np.zeros(w.shape) for k, w in model.iteritems() }
 
 prev_frame = None
 inputs, preacts, rewards, losses = [],[],[],[]
@@ -94,24 +90,23 @@ frame = env.reset()
 while True:
     env.render()
     # preprocessing
-    # import ipdb;ipdb.set_trace()
     curr_frame = preprocess(frame)
     curr_frame = curr_frame - prev_frame if prev_frame is not None else np.zeros(num_inputs)
     prev_frame = curr_frame
 
     # feedforward
+    print curr_frame
     preactivation, output = feedforward(curr_frame)
     preacts.append(preactivation)
     inputs.append(curr_frame)
 
     # explore vs exploit
-    flip = np.random.rand()
-    normalized = output/np.sum(output)
-    cum_probs = np.cumsum(normalized)
-    y = np.searchsorted(cum_probs, flip)
-    losses.append(y - output)
+    flip = np.random.uniform()
+    print flip, output
+    action = 2 if flip < output else 3
+    y = 1 if action == 2 else 0
+    losses.append(action - output)
 
-    action = 2 if y == 1 else 3
     frame, reward, done, info = env.step(action)
     rewards.append(reward)
 
@@ -131,7 +126,8 @@ while True:
         discounted_r /= np.std(discounted_r)
 
         gradient = discounted_r
-        updates = backprop(np_inputs, np_preacts, np_rewards)
+        print gradient.shape, np_preacts.shape
+        updates = backprop(np_inputs, np_preacts, gradient)
         for k in model: grad_buffer[k] += updates[k] # accumulate grad over batch
 
         if episode % batch_size == 0:
